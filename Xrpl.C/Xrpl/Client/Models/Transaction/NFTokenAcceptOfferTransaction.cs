@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using Xrpl.Client.Json.Converters;
 using Xrpl.Client.Models.Enums;
 
+//https://xrpl.org/nftoken-tester-tutorial.html#the-nftokenacceptoffer-transaction
+
 namespace Xrpl.Client.Models.Transactions
 {
     public class NFTokenAcceptOfferTransaction : TransactionCommon, INFTokenAcceptOfferTransaction
