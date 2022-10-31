@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Xrpl.Client
 {
     //credit: https://github.com/Badiboy/WebSocketWrapper/blob/master/WebSocketWrapper.cs
-    internal class WebSocketClient : IDisposable
+    public class WebSocketClient : IDisposable
     {
 
         private const int ReceiveChunkSize = 1048576;
@@ -19,11 +19,11 @@ namespace Xrpl.Client
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly CancellationToken _cancellationToken;
 
-        private Action<WebSocketClient> _onConnected;
-        private Action<Exception, WebSocketClient> _onConnectionError;
-        private Action<byte[], WebSocketClient> _onMessageBinary;
-        private Action<string, WebSocketClient> _onMessageString;
-        private Action<WebSocketClient> _onDisconnected;
+        private Func<WebSocketClient,Task> _onConnected;
+        private Func<Exception, WebSocketClient, Task> _onConnectionError;
+        private Func<byte[], WebSocketClient, Task> _onMessageBinary;
+        private Func<string, WebSocketClient, Task> _onMessageString;
+        private Func<WebSocketClient,Task> _onDisconnected;
 
         protected WebSocketClient(string uri)
         {
@@ -86,7 +86,7 @@ namespace Xrpl.Client
         /// </summary>
         /// <param name="onConnect">The Action to call</param>
         /// <returns>Self</returns>
-        internal WebSocketClient OnConnect(Action<WebSocketClient> onConnect)
+        internal WebSocketClient OnConnect(Func<WebSocketClient,Task> onConnect)
         {
             _onConnected = onConnect;
             return this;
@@ -97,7 +97,7 @@ namespace Xrpl.Client
         /// </summary>
         /// <param name="onConnectionError">The Action to call</param>
         /// <returns>Self</returns>
-        internal WebSocketClient OnConnectionError(Action<Exception, WebSocketClient> onConnectionError)
+        internal WebSocketClient OnConnectionError(Func<Exception, WebSocketClient, Task> onConnectionError)
         {
             _onConnectionError = onConnectionError;
             return this;
@@ -108,7 +108,7 @@ namespace Xrpl.Client
         /// </summary>
         /// <param name="onDisconnect">The Action to call</param>
         /// <returns>Self</returns>
-        internal WebSocketClient OnDisconnect(Action<WebSocketClient> onDisconnect)
+        internal WebSocketClient OnDisconnect(Func<WebSocketClient,Task> onDisconnect)
         {
             _onDisconnected = onDisconnect;
             return this;
@@ -119,7 +119,7 @@ namespace Xrpl.Client
         /// </summary>
         /// <param name="onMessage">The Action to call.</param>
         /// <returns>Self</returns>
-        internal WebSocketClient OnBinaryMessage(Action<byte[], WebSocketClient> onMessage)
+        internal WebSocketClient OnBinaryMessage(Func<byte[], WebSocketClient,Task> onMessage)
         {
             _onMessageBinary = onMessage;
             return this;
@@ -130,7 +130,7 @@ namespace Xrpl.Client
         /// </summary>
         /// <param name="onMessage">The Action to call.</param>
         /// <returns>Self</returns>
-        internal WebSocketClient OnMessageReceived(Action<string, WebSocketClient> onMessage)
+        internal WebSocketClient OnMessageReceived(Func<string, WebSocketClient,Task> onMessage)
         {
             _onMessageString = onMessage;
             return this;
@@ -156,9 +156,18 @@ namespace Xrpl.Client
 
         private async void SendMessageAsync(byte[] message)
         {
+            if(_ws is null)
+                return;
             if (_ws.State != WebSocketState.Open)
             {
-                throw new Exception("Connection is not open.");
+                try
+                {
+                    Connect();
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Connection is not open.");
+                }
             }
 
             var messagesCount = (int)Math.Ceiling((double)message.Length / SendChunkSize);
@@ -186,9 +195,16 @@ namespace Xrpl.Client
                 CallOnConnected();
                 StartListen();
             }
+            catch (ObjectDisposedException)
+            {
+                if(!IsDisposed)
+                    Dispose();
+                return;
+            }
             catch (Exception e)
             {
-                _ws.Dispose();
+                
+                _ws?.Dispose();
                 _ws = null;
                 CallOnConnectionError(e);
             }
@@ -199,8 +215,15 @@ namespace Xrpl.Client
             if (_ws != null)
             {
                 if (_ws.State != WebSocketState.Open)
-                    await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                _ws.Dispose();
+                    try
+                    {
+                        await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    }
+                    catch (Exception e)
+                    {
+                        
+                    }
+                Dispose();
                 _ws = null;
                 CallOnDisconnected();
             }
@@ -254,7 +277,7 @@ namespace Xrpl.Client
                 RunInTask(() => _onMessageBinary(result, this));
 
             if (_onMessageString != null)
-                RunInTask(() => _onMessageString(Encoding.UTF8.GetString(result), this));
+                RunInTask(async () => await _onMessageString(Encoding.UTF8.GetString(result), this));
         }
 
 
@@ -278,13 +301,15 @@ namespace Xrpl.Client
                 throw e;
         }
 
-        private static void RunInTask(Action action)
+        private static void RunInTask(Func<Task> action)
         {
-            Task.Factory.StartNew(action);
+            Task.Run(action);
         }
 
+        public bool IsDisposed;
         public void Dispose()
         {
+            IsDisposed = true;
             _ws?.Dispose();
             _cancellationTokenSource?.Dispose();
         }
