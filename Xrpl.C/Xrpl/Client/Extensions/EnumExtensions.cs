@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Xrpl.Client.Extensions;
 
-public static class EmumExtensions
+public static class EnumExtensions
 {
     public static IEnumerable<T> DecodeFlags<T>(this T e) where T : Enum
     {

@@ -153,7 +153,8 @@ namespace Ripple.Binary.Codec.Transactions
                 },
                 [TransactionType.NFTokenAcceptOffer] = new TxFormat
                 {
-                    [Field.NFTokenID] = Requirement.Required
+                    //[Field.NFTokenID] = Requirement.Required,
+                    [Field.NFTokenSellOffer] = Requirement.Required
                 },
                 [TransactionType.SetRegularKey] = new TxFormat
                 {
@@ -208,10 +209,6 @@ namespace Ripple.Binary.Codec.Transactions
                 {
                     [Field.Target] = Requirement.Optional,
                     [Field.Expiration] = Requirement.Optional
-                },
-                [TransactionType.TicketCancel] = new TxFormat
-                {
-                    [Field.TicketID] = Requirement.Required
                 },
                 // The SignerEntries are optional because a SignerList is deleted by
                 // setting the SignerQuorum to zero and omitting SignerEntries.

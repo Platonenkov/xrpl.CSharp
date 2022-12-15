@@ -28,19 +28,23 @@ namespace Xrpl.Client.Models.Methods
 
     public class NFT
     {
+        [JsonProperty("Flags")]
+        public string Flags { get; set; }
+        [JsonProperty("TransferFee")]
+        public string TransferFee { get; set; }
         [JsonProperty("account")]
         public string Account { get; set; }
 
         [JsonProperty("issuer")]
         public string Issuer { get; set; }
 
-        [JsonProperty("nft_id")]
+        [JsonProperty("NFTokenID")]
         public string NFTokenID { get; set; }
 
-        [JsonProperty("token_taxon")]
+        [JsonProperty("NFTokenTaxon")]
         public uint NFTokenTaxon { get; set; }
 
-        [JsonProperty("uri")]
+        [JsonProperty("URI")]
         public string URI { get; set; }
 
         [JsonIgnore]

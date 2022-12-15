@@ -458,7 +458,7 @@ namespace Xrpl.Client.Tests
             offerCreate.Destination = "rJpMn8yEHeWSQ6w581dJsk8Z2jhCUEWbwD";
             offerCreate.Expiration = DateTime.UtcNow.AddHours(1);
             offerCreate.Account = "rBgHF5VQF74Gi2yFVppDbD9tL9radvkLmb";
-            offerCreate.Flags = NFTokenCreateOfferFlags.tfSellToken;
+            offerCreate.Flags = NFTokenCreateOfferFlags.tfSellNFToken;
 
             var json = offerCreate.ToJson();
             TxSigner signer = TxSigner.FromSecret("sEdV9rGxpFHK4zbpMYUVrZ86zv1Lmwn");

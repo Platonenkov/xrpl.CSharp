@@ -1,5 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+
+using System;
 using System.Linq;
+using System.Text;
+using Org.BouncyCastle.Math;
+using Xrpl.Client.Exceptions;
 
 namespace Ripple.Binary.Codec.Util
 {
@@ -16,7 +21,7 @@ namespace Ripple.Binary.Codec.Util
             if (arr.Length == len)
             {
                 return arr;
-            } 
+            }
             var extended = new byte[len];
             var startingAt = len - arr.Length;
             Array.Copy(arr, 0, extended, startingAt, arr.Length);
@@ -73,7 +78,7 @@ namespace Ripple.Binary.Codec.Util
 
         public static byte[] GetBytes(byte value)
         {
-            return new[] {value};
+            return new[] { value };
         }
 
         ///
@@ -209,7 +214,7 @@ namespace Ripple.Binary.Codec.Util
         /// Returns:
         ///     An array of bytes with length 4.
         ///</summary>
-        
+
         public static byte[] GetBytes(uint value)
         {
             if (IsLittleEndian)
@@ -230,7 +235,7 @@ namespace Ripple.Binary.Codec.Util
         /// Returns:
         ///     An array of bytes with length 8.
         ///</summary>
-        
+
         public static byte[] GetBytes(ulong value)
         {
             if (IsLittleEndian)
@@ -710,4 +715,166 @@ namespace Ripple.Binary.Codec.Util
             return rv;
         }
     }
+    public static class NFTokenID
+    {
+        public static string ParseNFTokenID(string nftokenID)
+        {
+            var expectedLength = 64;
+            if (nftokenID.Length != expectedLength)
+            {
+                throw new RippleException($"Attempting to parse a nftokenID with length {nftokenID.Length}, but expected a token with length {expectedLength}");
+            }
+
+            var scrambledTaxon = new BigInteger(nftokenID.Substring(48, 8), 16).LongValue;
+            var sequence = new BigInteger(nftokenID.Substring(56, 8), 16).LongValue;
+
+            var NFTokenIDData = new
+            {
+                NFTokenID = nftokenID,
+                Flags = new BigInteger(nftokenID.Substring(0, 4), 16).LongValue,
+                TransferFee = new BigInteger(nftokenID.Substring(4, 4), 16).LongValue,
+                //Issuer = EncodeAccountID(Encoding.UTF8.GetBytes(nftokenID.Substring(8, 40))),
+                Taxon = UnscrambleTaxon(scrambledTaxon, sequence),
+                Sequence = sequence
+            };
+
+            var issuer = new BigInteger(nftokenID.Substring(8, 40), 16);
+            var t1 = issuer.ToBinaryString();
+            var t11 = issuer.ToHexadecimalString();
+            var t111 = issuer.ToOctalString();
+
+
+            return JsonConvert.SerializeObject(NFTokenIDData);
+        }
+
+        private static long UnscrambleTaxon(long taxon, long tokenSeq)
+        {
+            return (taxon ^ (384160001 * tokenSeq + 2459)) % 4294967296;
+        }
+
+        private static string EncodeAccountID(byte[] bytes)
+        {
+            var accountID = new StringBuilder();
+            var versionByte = bytes[0];
+            var versionByteHex = versionByte.ToString("X2");
+            accountID.Append(versionByteHex);
+            var accountIDBytes = bytes.Skip(1).ToArray();
+            var accountIDHex = BitConverter.ToString(accountIDBytes).Replace("-", "");
+            accountID.Append(accountIDHex);
+            return accountID.ToString();
+        }
+    }    /// <summary>
+         /// Extension methods to convert <see cref="System.Numerics.BigInteger"/>
+         /// instances to hexadecimal, octal, and binary strings.
+         /// </summary>
+    public static class BigIntegerExtensions
+    {
+        /// <summary>
+        /// Converts a <see cref="BigInteger"/> to a binary string.
+        /// </summary>
+        /// <param name="bigint">A <see cref="BigInteger"/>.</param>
+        /// <returns>
+        /// A <see cref="System.String"/> containing a binary
+        /// representation of the supplied <see cref="BigInteger"/>.
+        /// </returns>
+        public static string ToBinaryString(this BigInteger bigint)
+        {
+            var bytes = bigint.ToByteArray();
+            var idx = bytes.Length - 1;
+
+            // Create a StringBuilder having appropriate capacity.
+            var base2 = new StringBuilder(bytes.Length * 8);
+
+            // Convert first byte to binary.
+            var binary = Convert.ToString(bytes[idx], 2);
+
+            // Ensure leading zero exists if value is positive.
+            if (binary[0] != '0' && bigint.SignValue == 1)
+            {
+                base2.Append('0');
+            }
+
+            // Append binary string to StringBuilder.
+            base2.Append(binary);
+
+            // Convert remaining bytes adding leading zeros.
+            for (idx--; idx >= 0; idx--)
+            {
+                base2.Append(Convert.ToString(bytes[idx], 2).PadLeft(8, '0'));
+            }
+
+            return base2.ToString();
+        }
+
+        /// <summary>
+        /// Converts a <see cref="BigInteger"/> to a hexadecimal string.
+        /// </summary>
+        /// <param name="bigint">A <see cref="BigInteger"/>.</param>
+        /// <returns>
+        /// A <see cref="System.String"/> containing a hexadecimal
+        /// representation of the supplied <see cref="BigInteger"/>.
+        /// </returns>
+        public static string ToHexadecimalString(this BigInteger bigint)
+        {
+            return bigint.ToString(16);
+        }
+
+        /// <summary>
+        /// Converts a <see cref="BigInteger"/> to a octal string.
+        /// </summary>
+        /// <param name="bigint">A <see cref="BigInteger"/>.</param>
+        /// <returns>
+        /// A <see cref="System.String"/> containing an octal
+        /// representation of the supplied <see cref="BigInteger"/>.
+        /// </returns>
+        public static string ToOctalString(this BigInteger bigint)
+        {
+            var bytes = bigint.ToByteArray();
+            var idx = bytes.Length - 1;
+
+            // Create a StringBuilder having appropriate capacity.
+            var base8 = new StringBuilder(((bytes.Length / 3) + 1) * 8);
+
+            // Calculate how many bytes are extra when byte array is split
+            // into three-byte (24-bit) chunks.
+            var extra = bytes.Length % 3;
+
+            // If no bytes are extra, use three bytes for first chunk.
+            if (extra == 0)
+            {
+                extra = 3;
+            }
+
+            // Convert first chunk (24-bits) to integer value.
+            int int24 = 0;
+            for (; extra != 0; extra--)
+            {
+                int24 <<= 8;
+                int24 += bytes[idx--];
+            }
+
+            // Convert 24-bit integer to octal without adding leading zeros.
+            var octal = Convert.ToString(int24, 8);
+
+            // Ensure leading zero exists if value is positive.
+            if (octal[0] != '0' && bigint.SignValue == 1)
+            {
+                base8.Append('0');
+            }
+
+            // Append first converted chunk to StringBuilder.
+            base8.Append(octal);
+
+            // Convert remaining 24-bit chunks, adding leading zeros.
+            for (; idx >= 0; idx -= 3)
+            {
+                int24 = (bytes[idx] << 16) + (bytes[idx - 1] << 8) + bytes[idx - 2];
+                base8.Append(Convert.ToString(int24, 8).PadLeft(8, '0'));
+            }
+
+            return base8.ToString();
+        }
+    }
+
 }
+

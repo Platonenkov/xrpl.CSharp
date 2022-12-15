@@ -9,7 +9,7 @@ namespace Xrpl.Client.Models.Transactions
     [Flags]
     public enum NFTokenCreateOfferFlags : uint
     {
-        tfSellToken = 1
+        tfSellNFToken = 1
     }
     public class NFTokenCreateOfferTransaction : TransactionCommon, INFTokenCreateOfferTransaction
     {

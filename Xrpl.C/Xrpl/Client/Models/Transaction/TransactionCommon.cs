@@ -5,6 +5,11 @@ using Xrpl.Client.Extensions;
 using Xrpl.Client.Json.Converters;
 using Xrpl.Client.Models.Enums;
 using Xrpl.Client.Models.Common;
+using Newtonsoft.Json.Linq;
+using System.Linq;
+using Xrpl.Client.Models.Ledger;
+using xrpl_c.Xrpl.Client.Models.Subscriptions;
+using System;
 
 namespace Xrpl.Client.Models.Transactions
 {
@@ -139,7 +144,7 @@ namespace Xrpl.Client.Models.Transactions
 
         [JsonProperty("Sequence")]
         public int Sequence { get; set; }
-        
+
         [JsonProperty("MintedTokens")]
         public int MintedTokens { get; set; }
 
@@ -162,10 +167,15 @@ namespace Xrpl.Client.Models.Transactions
         public object Balance { get; set; }
         public int Sequence { get; set; }
     }
-    
+
 
     public class AffectedNode
     {
+        //public BaseRippleLO CreatedNode { get; set; }
+
+        //public BaseRippleLO DeletedNode { get; set; }
+
+        //public BaseRippleLO ModifiedNode { get; set; }
         public NodeInfo CreatedNode { get; set; }
 
         public NodeInfo DeletedNode { get; set; }
@@ -187,6 +197,7 @@ namespace Xrpl.Client.Models.Transactions
 
     public class NodeInfo
     {
+        public string Index { get; set; }
         [JsonConverter(typeof(StringEnumConverter))]
         public LedgerEntryType LedgerEntryType { get; set; }
 
@@ -198,13 +209,14 @@ namespace Xrpl.Client.Models.Transactions
         [JsonProperty("PreviousTxnLgrSeq")]
         public uint? PreviousTransactionLedgerSequence { get; set; }
 
-        [JsonProperty("FinalFields")]
-        public FieldInfo FinalFields { get; set; }
+        public dynamic FinalFields { get; set; }
+        public BaseRippleLO Final => LOConverter.GetBaseRippleLO(LedgerEntryType, FinalFields);
 
-        [JsonProperty("NewFields")]
-        public FieldInfo NewFields { get; set; }
+        public dynamic NewFields { get; set; }
+        public BaseRippleLO New => LOConverter.GetBaseRippleLO(LedgerEntryType, NewFields);
 
         public dynamic PreviousFields { get; set; }
+        public BaseRippleLO Previous => LOConverter.GetBaseRippleLO(LedgerEntryType, PreviousFields);
     }
 
     public interface ITransactionCommon
@@ -236,29 +248,15 @@ namespace Xrpl.Client.Models.Transactions
         string ToJson();
     }
 
-    public interface ITransactionResponseCommon : IBaseTransactionResponse
+    public interface ITransactionResponseCommon : IBaseTransactionResponse, ITransactionCommon
     {
-        string Account { get; set; }
-        string AccountTxnID { get; set; }
-        Currency Fee { get; set; }
-        uint? Flags { get; set; }
-        uint? LastLedgerSequence { get; set; }
-        List<Memo> Memos { get; set; }
-        Meta Meta { get; set; }
         uint? date { get; set; }
         uint? inLedger { get; set; }
         uint? ledger_index { get; set; }
-        uint? Sequence { get; set; }
-        List<Signer> Signers { get; set; }
-        string SigningPublicKey { get; set; }
-        string TransactionSignature { get; set; }
-        TransactionType TransactionType { get; set; }
-
-        string ToJson();
     }
 
     [JsonConverter(typeof(TransactionConverter))]
-    public abstract class   TransactionResponseCommon : BaseTransactionResponse, ITransactionCommon, ITransactionResponseCommon
+    public abstract class TransactionResponseCommon : BaseTransactionResponse, ITransactionResponseCommon
     {
         public string Account { get; set; }
 
@@ -275,6 +273,8 @@ namespace Xrpl.Client.Models.Transactions
         public uint? LastLedgerSequence { get; set; }
 
         public List<Memo> Memos { get; set; }
+        [JsonIgnore]
+        public string MemoValue => Memos is not { } memos ? null : memos.Aggregate(string.Empty, (current, memo) => current + $"{memo.Memo2.MemoData.FromHexString()}");
 
         public uint? Sequence { get; set; }
 
@@ -292,7 +292,7 @@ namespace Xrpl.Client.Models.Transactions
         [JsonProperty("meta")]
         public Meta Meta { get; set; }
 
-        [JsonProperty("date")]
+        //[JsonProperty("date")]
         public uint? date { get; set; }
 
         [JsonProperty("inLedger")]

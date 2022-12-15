@@ -79,7 +79,7 @@ namespace Xrpl.Client.Tests
         [TestMethod]
         public async Task CanGetAccountNFTs()
         {
-            AccountNFTs accountNfts = await xls20client.AccountNFTs(xls20Account);
+            AccountNFTs accountNfts = await xls20client.AccountNfTs(xls20Account);
             Assert.IsNotNull(accountNfts);
         }
 
@@ -93,14 +93,14 @@ namespace Xrpl.Client.Tests
         [TestMethod]
         public async Task CanGetNFTBuyOffers()
         {
-            var nftBuyOffers = await xls20client.NFTBuyOffers(nft_id);
+            var nftBuyOffers = await xls20client.NftBuyOffers(nft_id);
             Assert.IsNotNull(nftBuyOffers);
         }
 
         [TestMethod]
         public async Task CanGetNFTNFTokenSellOffers()
         {
-            var nftNFTokenSellOffers = await xls20client.NFTSellOffers(nft_id);
+            var nftNFTokenSellOffers = await xls20client.NftSellOffers(nft_id);
             Assert.IsNotNull(nftNFTokenSellOffers);
         }
 

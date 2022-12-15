@@ -36,7 +36,13 @@ namespace Xrpl.Client.Models.Methods
         public string Balance { get; set; }
 
         [JsonIgnore]
-        public decimal BalanceAsNumber => decimal.Parse(Balance, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+        public decimal BalanceAsNumber => decimal.Parse(Balance, NumberStyles.AllowLeadingSign
+                                                                 | (NumberStyles.AllowLeadingSign & NumberStyles.AllowDecimalPoint)
+                                                                 | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent)
+                                                                 | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                                                                 | (NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                                                                 | NumberStyles.AllowExponent
+                                                                 | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
 
         [JsonProperty("currency")]
         public string Currency { get; set; }
@@ -47,13 +53,25 @@ namespace Xrpl.Client.Models.Methods
         public string Limit { get; set; }
 
         [JsonIgnore]
-        public double LimitAsNumber => double.Parse(Limit, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+        public double LimitAsNumber => double.Parse(Limit, NumberStyles.AllowLeadingSign
+                                                           | (NumberStyles.AllowLeadingSign & NumberStyles.AllowDecimalPoint)
+                                                           | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent)
+                                                           | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                                                           | (NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                                                           | NumberStyles.AllowExponent
+                                                           | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
 
         [JsonProperty("limit_peer")]
         public string LimitPeer { get; set; }
 
         [JsonIgnore]
-        public decimal LimitPeerAsNumber => decimal.Parse(LimitPeer, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+        public decimal LimitPeerAsNumber => decimal.Parse(LimitPeer, NumberStyles.AllowLeadingSign
+                                                                     | (NumberStyles.AllowLeadingSign & NumberStyles.AllowDecimalPoint)
+                                                                     | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent)
+                                                                     | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                                                                     | (NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                                                                     | NumberStyles.AllowExponent
+                                                                     | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
 
         [JsonProperty("quality_in")]
         public uint QualityIn { get; set; }

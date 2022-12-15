@@ -23,7 +23,16 @@ namespace Xrpl.Client.Models.Common
         [JsonIgnore]
         public decimal ValueAsNumber
         {
-            get => string.IsNullOrEmpty(Value) ? 0 : decimal.Parse(Value, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+            get => string.IsNullOrEmpty(Value)
+                ? 0
+                : decimal.Parse(Value,
+                    NumberStyles.AllowLeadingSign
+                    | (NumberStyles.AllowLeadingSign & NumberStyles.AllowDecimalPoint)
+                    | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent)
+                    | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                    | (NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                    | NumberStyles.AllowExponent
+                    | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
             set => Value = value.ToString(CurrencyCode == "XRP" ? "G0" : "G15", CultureInfo.InvariantCulture);
         }
 
@@ -34,8 +43,7 @@ namespace Xrpl.Client.Models.Common
             {
                 if (CurrencyCode != "XRP" || string.IsNullOrEmpty(Value))
                     return null;
-                decimal val = decimal.Parse(Value, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
-                return val / 1000000;
+                return ValueAsNumber / 1000000;
             }
             set
             {
@@ -51,5 +59,11 @@ namespace Xrpl.Client.Models.Common
                 }
             }
         }
+
+        #region Overrides of Object
+
+        public override string ToString() => CurrencyValidName == "XRP" ? $"XRP: {ValueAsXrp:0.######}" : $"{CurrencyValidName}: {ValueAsNumber:0.###############}";
+
+        #endregion
     }
 }
