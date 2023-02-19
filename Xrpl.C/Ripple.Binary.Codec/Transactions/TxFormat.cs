@@ -117,6 +117,11 @@ namespace Ripple.Binary.Codec.Transactions
                     [Field.QualityIn] = Requirement.Optional,
                     [Field.QualityOut] = Requirement.Optional
                 },
+                [TransactionType.AccountDelete] = new TxFormat
+                {
+                    [Field.Destination] = Requirement.Required,
+                    [Field.DestinationTag] = Requirement.Optional,
+                },
                 [TransactionType.OfferCreate] = new TxFormat
                 {                    
                     [Field.TakerPays] = Requirement.Required,
@@ -154,7 +159,9 @@ namespace Ripple.Binary.Codec.Transactions
                 [TransactionType.NFTokenAcceptOffer] = new TxFormat
                 {
                     //[Field.NFTokenID] = Requirement.Required,
-                    [Field.NFTokenSellOffer] = Requirement.Required
+                    [Field.NFTokenSellOffer] = Requirement.Optional,
+                    [Field.NFTokenBuyOffer] = Requirement.Optional,
+
                 },
                 [TransactionType.SetRegularKey] = new TxFormat
                 {

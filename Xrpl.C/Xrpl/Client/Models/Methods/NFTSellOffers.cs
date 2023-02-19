@@ -27,6 +27,8 @@ namespace Xrpl.Client.Models.Methods
 
         [JsonProperty("index")]
         public string Index { get; set; }
+        [JsonProperty("nft_offer_index")]
+        public string OfferIndex { get; set; }
 
         [JsonProperty("owner")]
         public string Owner { get; set; }

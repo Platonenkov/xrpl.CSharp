@@ -57,9 +57,13 @@ namespace Xrpl.Client.Models.Ledger
         public string MessageKey { get; set; }
 
         public byte? TickSize { get; set; }
+        public uint? TicketCount { get; set; }
 
         public uint? TransferRate { get; set; }
 
         public string Domain { get; set; }
+        public uint? BurnedNFTokens { get; set; }
+        public uint? MintedNFTokens { get; set; }
+        public string NFTokenMinter { get; set; }
     }
 }

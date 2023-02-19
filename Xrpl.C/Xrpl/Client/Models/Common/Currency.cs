@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 using System.Globalization;
 
@@ -12,7 +13,12 @@ namespace Xrpl.Client.Models.Common
         }
 
         [JsonProperty("currency")]
-        public string CurrencyCode { get; set; }
+        public string CurrencyCode 
+        { 
+            get; 
+            set;
+
+        }
 
         [JsonProperty("value")]
         public string Value { get; set; }
@@ -23,16 +29,29 @@ namespace Xrpl.Client.Models.Common
         [JsonIgnore]
         public decimal ValueAsNumber
         {
-            get => string.IsNullOrEmpty(Value)
-                ? 0
-                : decimal.Parse(Value,
-                    NumberStyles.AllowLeadingSign
-                    | (NumberStyles.AllowLeadingSign & NumberStyles.AllowDecimalPoint)
-                    | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent)
-                    | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
-                    | (NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
-                    | NumberStyles.AllowExponent
-                    | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+            get
+            {
+                try
+                {
+                    return string.IsNullOrEmpty(Value)
+                        ? 0
+                        : decimal.Parse(
+                            Value,
+                            NumberStyles.AllowLeadingSign
+                            | (NumberStyles.AllowLeadingSign & NumberStyles.AllowDecimalPoint)
+                            | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent)
+                            | (NumberStyles.AllowLeadingSign & NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                            | (NumberStyles.AllowExponent & NumberStyles.AllowDecimalPoint)
+                            | NumberStyles.AllowExponent
+                            | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            }
             set => Value = value.ToString(CurrencyCode == "XRP" ? "G0" : "G15", CultureInfo.InvariantCulture);
         }
 

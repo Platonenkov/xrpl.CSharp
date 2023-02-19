@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 
 using System;
-
 using Xrpl.Client.Json.Converters;
 using Xrpl.Client.Models.Common;
 using Xrpl.Client.Models.Enums;
@@ -79,5 +78,4 @@ namespace xrpl_c.Xrpl.Client.Models.Ledger
         public uint PreviousTransactionLedgerSequence { get; set; }
 
     }
-
 }

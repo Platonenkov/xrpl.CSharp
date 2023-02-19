@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -174,7 +175,7 @@ namespace Xrpl.Client
         /// <param name="message">The data to send</param>
         private async void SendMessageAsync(byte[] message)
         {
-            if (_ws is null)
+            if (_ws is null || IsDisposed)
                 return;
             if (_ws.State != WebSocketState.Open)
             {
@@ -203,6 +204,8 @@ namespace Xrpl.Client
 
                 try
                 {
+                    if(_ws is null)
+                        return;
                     await _ws.SendAsync(new ArraySegment<byte>(message, offset, count), WebSocketMessageType.Text, lastMessage, _cancellationToken);
                 }
                 catch (OperationCanceledException)
@@ -230,6 +233,13 @@ namespace Xrpl.Client
             }
             catch (ObjectDisposedException)
             {
+                if (!IsDisposed)
+                    Dispose();
+                return;
+            }
+            catch (System.Net.WebSockets.WebSocketException e)
+            {
+                Trace.TraceError("SocketError{0}", e);
                 if (!IsDisposed)
                     Dispose();
                 return;
@@ -332,7 +342,7 @@ namespace Xrpl.Client
         public bool IsDisposed;
         public void Dispose()
         {
-            if(_cancellationTokenSource?.IsCancellationRequested==true)
+            if (_cancellationTokenSource?.IsCancellationRequested == true)
                 _cancellationTokenSource.Cancel();
             IsDisposed = true;
             _ws?.Dispose();

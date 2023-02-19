@@ -21,7 +21,8 @@ using Submit = Xrpl.Client.Models.Transactions.Submit;
 
 namespace Xrpl.Client
 {
-    public delegate Task OnDisconnected(WebSocketClient client);
+    public delegate Task OnConnected();
+    public delegate Task OnDisconnected(WebSocketState client);
     public delegate Task OnRippleResponse(string response);
     public delegate Task OnLedgerStreamResponse(LedgerStreamResponseResult response);
     public delegate Task OnValidationsStreamResponse(ValidationsStreamResponseResult response);
@@ -339,6 +340,7 @@ namespace Xrpl.Client
 
     public class RippleClient : IRippleClient
     {
+        public event OnConnected OnConnected;
         public event OnDisconnected OnDisconnected;
         public event OnLedgerStreamResponse OnLedgerClosed;
         public event OnValidationsStreamResponse OnValidation;
@@ -383,12 +385,31 @@ namespace Xrpl.Client
             _Client.OnConnectionError(
                 async (Exception, Client) =>
                 {
+                    if (Client.State == WebSocketState.Aborted || Client.State == WebSocketState.CloseSent)
+                    {
+
+                    }
+
                     await Error(Exception, Client);
                     await OnClientReconnect();
                 });
-            _Client.OnClosed(_ => OnClientReconnect());
+            _Client.OnClosed(Client =>
+            {
+                if (Client.State == WebSocketState.Aborted || Client.State == WebSocketState.CloseSent)
+                {
 
-            _Client.OnDisconnect(Client => OnDisconnected?.Invoke(Client));
+                }
+                return OnClientReconnect();
+            });
+
+            _Client.OnDisconnect(Client =>
+            {
+                if (Client.State == WebSocketState.Aborted || Client.State == WebSocketState.CloseSent)
+                {
+
+                }
+                return OnDisconnected?.Invoke(Client.State);
+            });
 
             Debug.WriteLine("websocket client fully initialized and ready to work");
         }
@@ -416,6 +437,9 @@ namespace Xrpl.Client
                     break;
                 System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
             } while (_Client.State != WebSocketState.Open);
+
+            if (_Client.State == WebSocketState.Open)
+                OnConnected?.Invoke();
         }
         /// <inheritdoc />
         public void Disconnect()

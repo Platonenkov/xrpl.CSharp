@@ -29,7 +29,7 @@ namespace Xrpl.Client.Json.Converters
                 LedgerEntryType.NFTokenOffer => JsonConvert.DeserializeObject<LONFTokenOffer>($"{field}"),
                 //LedgerEntryType.NegativeUNL => expr,
                 //LedgerEntryType.NFTokenOffer => expr,
-                //LedgerEntryType.NFTokenPage => expr,
+                LedgerEntryType.NFTokenPage => JsonConvert.DeserializeObject<LONFTokenPage>($"{field}"),
                 //LedgerEntryType.Ticket => expr,
                 //LedgerEntryType.Check => expr,
                 //LedgerEntryType.DepositPreauth => expr,
@@ -69,6 +69,8 @@ namespace Xrpl.Client.Json.Converters
                     return new LOSignerList();
                 case "LONFTokenOffer":
                     return new LONFTokenOffer();
+                case "LONFTokenPage":
+                    return new LONFTokenPage();
                     // case "Ticket":
                     //     return new LOTicket();
             }
@@ -119,6 +121,8 @@ namespace Xrpl.Client.Json.Converters
                     return new LOSignerList();
                 case "NFTokenOffer":
                     return new LONFTokenOffer(); //todo new type
+                case "NFTokenPage":
+                    return new LONFTokenPage(); //todo new type
                 case "Ticket":
                     return new LOTicket();
             }

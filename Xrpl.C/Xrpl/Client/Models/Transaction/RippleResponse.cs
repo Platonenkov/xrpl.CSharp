@@ -23,4 +23,21 @@ namespace Xrpl.Client.Models.Transactions
         [JsonProperty("result")]
         public object Result { get; set; }
     }
+    public class RippleResponse<T>
+    {
+        [JsonProperty("id")]
+        public Guid Id { get; set; }
+
+        [JsonProperty("error")]
+        public string Error { get; set; }
+
+        [JsonProperty("status")]
+        public string Status { get; set; }
+
+        [JsonProperty("type")]
+        public ResponseStreamType Type { get; set; }
+
+        [JsonProperty("result")]
+        public T Result { get; set; }
+    }
 }
